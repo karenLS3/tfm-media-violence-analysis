@@ -1,0 +1,28 @@
+from_date: "20150101"
+to_date: "20150131"
+limit: 100
+
+sources:
+  - name: clarin_arg
+    domain: "www.clarin.com/"
+    country: "Argentina"
+
+  - name: lanacion
+    domain: "www.lanacion.com.ar/"
+    country: "Argentina"
+
+  - name: pagina12
+    domain: "www.pagina12.com.ar/"
+    country: "Argentina"
+
+  - name: eluniversal_mx
+    domain: "www.eluniversal.com.mx/noticias.html"
+    country: "México"
+
+  - name: milenio
+    domain: "www.milenio.com/"
+    country: "México"
+
+  - name: jornada
+    domain: "www.jornada.com.mx/"
+    country: "México"

@@ -1,0 +1,415 @@
+metadata:
+  description: >
+    Diccionario inicial para detección de noticias sobre violencia contra mujeres,
+    femicidio/feminicidio y muertes violentas con posible dimensión de género.
+  languages:
+    - es
+  countries:
+    - Argentina
+    - México
+  notes:
+    - "Argentina usa con más frecuencia femicidio."
+    - "México usa con más frecuencia feminicidio."
+    - "Los términos indirectos requieren validación por contexto."
+
+female_reference_terms:
+  strong:
+    - mujer
+    - mujeres
+    - niña
+    - niñas
+    - chica
+    - chicas
+
+  gendered_phrases:
+    - la joven
+    - una joven
+    - esta joven
+    - esa joven
+    - la adolescente
+    - una adolescente
+    - esta adolescente
+    - esa adolescente
+    - la menor
+    - una menor
+    - la chica
+    - una chica
+    - la niña
+    - una niña
+    - cuerpo de la joven
+    - cuerpo de una joven
+    - cuerpo de la mujer
+    - cuerpo de una mujer
+    - cuerpo de la chica
+    - cuerpo de una chica
+    - cuerpo de la adolescente
+    - cuerpo de una adolescente
+
+  roles:
+    - madre
+    - madres
+    - esposa
+    - esposas
+    - novia
+    - novias
+
+  ambiguous:
+    - joven
+    - jóvenes
+    - adolescente
+    - adolescentes
+    - menor
+    - menores
+    - víctima
+    - víctimas
+
+direct_terms:
+  high_precision:
+    - femicidio
+    - femicidios
+    - femicida
+    - femicidas
+    - feminicidio
+    - feminicidios
+    - feminicida
+    - feminicidas
+    - violencia de género
+    - violencia basada en género
+    - violencia por razones de género
+    - violencia machista
+    - violencia contra la mujer
+    - violencia contra las mujeres
+    - violencia hacia la mujer
+    - violencia hacia las mujeres
+    - violencia feminicida
+    - crimen de género
+    - asesinato por razones de género
+    - muerte violenta de una mujer
+    - muerte violenta de mujeres
+    - mujeres asesinadas por razones de género
+    - asesinatos de mujeres
+    - violencia física
+
+structural_context_terms:
+  gender_inequality:
+    - machismo
+    - misoginia
+    - sexismo
+    - microagresiones
+    - discriminación contra la mujer
+    - dominación masculina
+    - techo de cristal
+
+violence_types_and_modalities:
+  types:
+    - violencia física
+    - violencia psicológica
+    - violencia emocional
+    - violencia sexual
+    - violencia sobre la salud sexual y reproductiva
+    - violencia económica
+    - violencia patrimonial
+    - violencia simbólica
+    - violencia política
+    - violencia mediática
+    - violencia obstétrica
+    - violencia vicaria
+    - violencia doméstica
+    - violencia familiar
+    - violencia intrafamiliar
+    - violencia laboral
+    - violencia docente
+    - violencia institucional
+    - violencia comunitaria
+    - violencia en la comunidad
+    - discriminacion contra la mujer
+
+  digital_or_cyber_violence:
+    - violencia digital
+    - ciberviolencia
+    - violencia sexual cibernética
+    - violencia sexual digital
+    - acoso digital
+    - acoso virtual
+    - acoso en redes
+    - hostigamiento digital
+    - grooming
+    - doxing
+    - doxxing
+    - sexting no consentido
+    - difusión no consentida de imágenes íntimas
+    - difusión de imágenes íntimas sin consentimiento
+    - difusión de material íntimo
+    - pornografía no consentida
+    - extorsión sexual
+    - sextorsión
+
+  acts:
+    - maltrato
+    - maltratos
+    - agresión
+    - agresiones
+    - abuso
+    - abusos
+    - abuso sexual
+    - violación
+    - violaciones
+    - violencia bajo el efecto de sustancias
+    - acoso
+    - acoso sexual
+    - acoso callejero
+    - acoso laboral
+    - agresion sexual
+    - hostigamiento
+    - amenaza
+    - amenazas
+    - intimidación
+    - golpes
+    - golpeada
+    - golpeó
+    - atacada
+    - atacó
+    - sometida
+    - sometimiento
+    - explotación sexual
+    - trata de mujeres
+    - trata de personas
+    - prostitución forzada
+    - explotacion sexual
+    - matrimonio forzado
+    - matrimonio infantil
+    - mutilacion genital
+    - sumision quimica
+    - hostigamiento sexual
+    - acceso carnal violento
+    - acto sexual violento
+
+indirect_terms:
+  victim_death_phrases:
+    violent_or_suspicious:
+      - mujer asesinada
+      - mujeres asesinadas
+      - joven asesinada
+      - adolescente asesinada
+      - niña asesinada
+      - chica asesinada
+      - mujer hallada muerta
+      - joven hallada muerta
+      - chica hallada muerta
+      - adolescente hallada muerta
+      - apareció muerta
+      - aparece muerta
+      - hallada sin vida
+      - encontrada sin vida
+      - cuerpo de una mujer
+      - cuerpo de la mujer
+      - cuerpo de una joven
+      - cuerpo de la joven
+      - cuerpo de una chica
+      - cuerpo de la chica
+      - cuerpo de una adolescente
+      - cuerpo de la adolescente
+      - cadáver de una mujer
+      - restos de una mujer
+      - crimen de la joven
+      - crimen de la chica
+      - abuso sexual seguido de muerte
+
+    ambiguous_or_accidental:
+      - mujer muerta
+      - joven muerta
+      - chica muerta
+      - adolescente muerta
+      - niña muerta
+      - murió ahogada
+      - murio ahogada
+      - falleció ahogada
+      - fallecio ahogada
+      - ingresó sin vida
+      - ingreso sin vida
+      - sin vida
+
+  disappearance_phrases:
+    - mujer desaparecida
+    - joven desaparecida
+    - chica desaparecida
+    - adolescente desaparecida
+    - niña desaparecida
+    - estaba desaparecida
+    - había desaparecido
+    - denuncia de desaparición
+
+  injury_or_method_terms:
+    - asfixia
+    - murió por asfixia
+    - murio por asfixia
+    - estrangulada
+    - apuñalada
+    - heridas cortantes
+    - heridas de arma blanca
+    - arma blanca
+    - semienterrada
+    - signos de violencia
+    - signos de violencia sexual
+    - lesiones
+    - ahogada
+    - ahogamiento
+    - obstrucción de vías aéreas
+    - obstruccion de vias aereas
+    - paro cardiorrespiratorio
+
+  generic_crime_terms:
+    - asesinato
+    - asesinada
+    - asesinaron
+    - homicidio
+    - crimen
+    - muerte
+    - muerte violenta
+    - mataron
+    - mató
+    - detenido
+    - sospechoso
+    - acusado
+    - imputado
+
+relationship_terms:
+  intimate_partner:
+    - pareja
+    - su pareja
+    - ex pareja
+    - expareja
+    - ex-pareja
+    - novio
+    - ex novio
+    - exnovio
+    - marido
+    - ex marido
+    - esposo
+    - ex esposo
+    - cónyuge
+    - ex cónyuge
+    - concubino
+    - ex concubino
+    - conviviente
+    - ex conviviente
+    - amante
+    - relación de pareja
+    - vínculo sentimental
+    - relación sentimental
+    - relación amorosa
+    - padre de sus hijos
+    - padre de sus hijas
+
+  family_or_close_relation:
+    - padre
+    - padrastro
+    - hermano
+    - tío
+    - abuelo
+    - hijo
+    - familiar
+    - pariente
+    - vecino
+    - conocido
+    - compañero de trabajo
+    - jefe
+    - profesor
+    - docente
+
+aggressor_terms:
+  male_aggressor:
+    - hombre
+    - varón
+    - sujeto
+    - individuo
+    - agresor
+    - atacante
+    - asesino
+    - homicida
+    - femicida
+    - feminicida
+    - sospechoso
+    - detenido
+    - acusado
+    - imputado
+    - presunto autor
+
+accident_or_disaster_terms:
+  strong:
+    - accidente
+    - accidentes
+    - choque
+    - choques
+    - vuelco
+    - vuelcos
+    - siniestro vial
+    - temporal
+    - inundación
+    - inundacion
+    - derrumbe
+    - incendio
+    - explosión
+    - explosion
+    - catástrofe
+    - catastrofe
+
+  weak_context:
+    - ruta
+    - autopista
+    - tránsito
+    - transito
+    - calle
+    - camino
+
+classification_rules:
+  direct_match:
+    description: >
+      Si aparece un término directo de alta precisión, marcar como candidato fuerte.
+    score: 10
+
+  legal_policy_match:
+    description: >
+      Términos institucionales o legales. Relevantes para contexto, pero pueden aparecer
+      en notas de política pública sin caso concreto.
+    score: 5
+
+  implicit_phrase_match:
+    description: >
+      Frases indirectas sobre muerte o desaparición de mujer/joven/chica.
+    score: 6
+
+  relation_combo:
+    description: >
+      Combinación de víctima femenina + muerte/violencia + relación íntima o familiar.
+    required_groups:
+      - victim_terms.female_victim
+      - indirect_terms.generic_crime_terms
+      - relationship_terms.intimate_partner
+    score: 8
+
+  body_found_combo:
+    description: >
+      Combinación de cuerpo/cadáver/restos + mujer/joven/chica.
+    required_groups:
+      - victim_terms.female_victim
+      - indirect_terms.victim_death_phrases
+    score: 7
+
+  prior_violence_combo:
+    description: >
+      Señales de violencia previa o denuncia previa en contexto de relación.
+    required_groups:
+      - relationship_terms.intimate_partner
+      - relationship_terms.relational_context
+    score: 6
+
+  problematic_framing_match:
+    description: >
+      No clasifica por sí solo. Sirve para análisis discursivo del tratamiento mediático.
+    score: 2
+
+thresholds:
+  strong_candidate: 8
+  weak_candidate: 5
+  review_candidate: 3

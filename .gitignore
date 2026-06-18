@@ -1,0 +1,57 @@
+# Python cache
+__pycache__/
+__init__.py
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated data
+data/raw_cdx/
+data/raw_html/
+data/candidates/
+data/extracted_text/
+data/processed/
+data/logs/
+data/runs/
+
+# Keep annotation files
+!data/annotations/
+!data/annotations/*.csv
+
+# Outputs
+outputs/
+
+# Pytest
+.pytest_cache/
+
+# VSCode
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Logs
+*.log
+logs/
+data/logs/
+
+# Local backups
+_local_backup_before_github/
+backup*/
+*_backup*/
