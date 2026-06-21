@@ -1,6 +1,5 @@
 # Python cache
 __pycache__/
-__init__.py
 *.pyc
 *.pyo
 *.pyd
@@ -25,8 +24,6 @@ data/runs/
 !data/annotations/
 !data/annotations/*.csv
 
-# Outputs
-outputs/
 
 # Pytest
 .pytest_cache/
@@ -55,3 +52,12 @@ data/logs/
 _local_backup_before_github/
 backup*/
 *_backup*/
+
+# IRaMuTeQ exported corpora and outputs
+outputs/iramuteq/
+
+outputs/reports/
+outputs/logs/
+outputs/audits/
+outputs/tables/
+outputs/figures/

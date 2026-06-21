@@ -5,12 +5,16 @@ from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
 
+import argparse
+from src.utils.run_paths import get_run_paths
+
 from src.filtering.article_classifier import (
     load_lexicon,
     prepare_lexicon,
     classify_article,
 )
 from src.utils.logging_config import setup_logger
+from src.extraction.source_cleaners import clean_text_by_source, fix_title
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -50,15 +54,31 @@ def save_dataset(df: pd.DataFrame, parquet_path: Path, csv_path: Path | None = N
         csv_path.parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(csv_path, index=False, encoding="utf-8-sig")
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Build relevance dataset from extracted article texts."
+    )
 
-def main() -> None:
-    logger = setup_logger("build_relevance_dataset", ROOT / "data" / "logs")
+    parser.add_argument(
+        "--run-id",
+        default=None,
+        help="Identificador de corrida. Ejemplo: 2015_01_test. "
+            "Si se omite, usa las carpetas legacy data/processed, data/extracted_text, etc.",
+    )
 
-    articles_path = ROOT / "data" / "extracted_text" / "articles_text.parquet"
+    return parser.parse_args()
+
+
+def main(run_id: str | None = None) -> None:
+    paths = get_run_paths(ROOT, run_id)
+
+    logger = setup_logger("build_relevance_dataset", paths.logs_dir)
+
+    articles_path = paths.extracted_text_dir / "articles_text.parquet"
     lexicon_path = ROOT / "configs" / "lexicon_retrieval.yml"
 
-    out_dir = ROOT / "data" / "processed"
-    report_dir = ROOT / "outputs" / "reports"
+    out_dir = paths.processed_dir
+    report_dir = paths.reports_dir
 
     out_dir.mkdir(parents=True, exist_ok=True)
     report_dir.mkdir(parents=True, exist_ok=True)
@@ -74,6 +94,29 @@ def main() -> None:
     logger.info(f"Reading articles: {articles_path}")
     df = pd.read_parquet(articles_path)
 
+    if "text_raw" not in df.columns:
+        df["text_raw"] = df["text"]
+
+    df["text_clean"] = df.apply(
+        lambda row: clean_text_by_source(
+            row.get("text_raw", ""),
+            row.get("source", "")
+        ),
+        axis=1,
+    )
+
+    if "title_raw" not in df.columns:
+        df["title_raw"] = df.get("title", "")
+
+    df["title_clean"] = df.apply(
+        lambda row: fix_title(
+            row.get("title_raw", ""),
+            row.get("text_clean", ""),
+            row.get("source", "")
+        ),
+        axis=1,
+    )
+
     logger.info(f"Reading lexicon: {lexicon_path}")
     lexicon = load_lexicon(lexicon_path)
     prepared_lexicon = prepare_lexicon(lexicon)
@@ -81,11 +124,26 @@ def main() -> None:
     rows = []
 
     for row in tqdm(df.to_dict(orient="records"), total=len(df)):
+        # Mantener la fila original para guardar text_raw/text_clean/title_raw/title_clean,
+        # pero clasificar usando el texto limpio.
+        row_for_classification = dict(row)
+
+        row_for_classification["text"] = row.get(
+            "text_clean",
+            row.get("text", "")
+        )
+
+        row_for_classification["title"] = row.get(
+            "title_clean",
+            row.get("title", "")
+        )
+
         result = classify_article(
-            row=row,
+            row=row_for_classification,
             lexicon=lexicon,
             prepared_lexicon=prepared_lexicon,
         )
+
         rows.append({**row, **result})
 
     classified = pd.DataFrame(rows)
@@ -229,4 +287,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(run_id=args.run_id)

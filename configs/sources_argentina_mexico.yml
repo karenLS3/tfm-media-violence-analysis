@@ -1,6 +1,6 @@
 from_date: "20150101"
-to_date: "20150131"
-limit: 100
+to_date: "20251231"
+limit: 3
 
 sources:
   - name: clarin_arg
