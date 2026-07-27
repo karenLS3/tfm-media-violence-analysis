@@ -1,0 +1,84 @@
+# Léxico complementario para la capa de análisis contextual.
+# Estos términos NO clasifican por sí solos: solo se usan en combinación
+# con una referencia femenina y un hecho violento dentro de una ventana
+# de una o dos frases.
+
+prior_violence_or_control_terms:
+  previous_reports:
+    - denuncia previa
+    - denuncias previas
+    - había denunciado
+    - habia denunciado
+    - lo había denunciado
+    - lo habia denunciado
+    - había presentado una denuncia
+    - habia presentado una denuncia
+    - denunció previamente
+    - denuncio previamente
+    - antecedentes de violencia
+    - antecedentes de maltrato
+    - violencia previa
+    - agresiones anteriores
+    - episodios anteriores de violencia
+
+  protection_measures:
+    - orden de restricción
+    - orden de restriccion
+    - restricción perimetral
+    - restriccion perimetral
+    - prohibición de acercamiento
+    - prohibicion de acercamiento
+    - medida de protección
+    - medida de proteccion
+    - medidas de protección
+    - medidas de proteccion
+    - botón antipánico
+    - boton antipanico
+    - custodia policial
+
+  threats_and_harassment:
+    - la había amenazado
+    - la habia amenazado
+    - amenazas de muerte
+    - hostigamiento previo
+    - acoso persistente
+    - la perseguía
+    - la perseguia
+    - la vigilaba
+    - irrumpió en su casa
+    - irrumpio en su casa
+
+  coercive_control:
+    - controlaba sus movimientos
+    - controlaba su teléfono
+    - controlaba su telefono
+    - no la dejaba salir
+    - la mantenía aislada
+    - la mantenia aislada
+    - control económico
+    - control economico
+    - dependencia económica
+    - dependencia economica
+    - la obligaba
+    - la retenía
+    - la retenia
+
+  separation_or_rejection:
+    - no aceptaba la separación
+    - no aceptaba la separacion
+    - no aceptó la separación
+    - no acepto la separacion
+    - se había separado
+    - se habia separado
+    - quería separarse
+    - queria separarse
+    - tras la separación
+    - tras la separacion
+    - después de la separación
+    - despues de la separacion
+    - después de terminar la relación
+    - despues de terminar la relacion
+    - rechazó retomar la relación
+    - rechazo retomar la relacion
+    - se negó a volver
+    - se nego a volver
