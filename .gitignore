@@ -12,17 +12,9 @@ __pycache__/
 Thumbs.db
 
 # Generated data
-data/raw_cdx/
-data/raw_html/
-data/candidates/
-data/extracted_text/
-data/processed/
-data/logs/
-data/runs/
-
-# Keep annotation files
+data/**
 !data/annotations/
-!data/annotations/*.csv
+!data/annotations/**
 
 
 # Pytest
@@ -53,11 +45,5 @@ _local_backup_before_github/
 backup*/
 *_backup*/
 
-# IRaMuTeQ exported corpora and outputs
-outputs/iramuteq/
-
-outputs/reports/
-outputs/logs/
-outputs/audits/
-outputs/tables/
-outputs/figures/
+# Generated outputs
+outputs/

@@ -132,3 +132,24 @@ def clean_text_by_source(text: str, source: str) -> str:
         return clean_pagina12_text(text)
 
     return clean_generic_text(text)
+
+def fix_title(
+    title: str,
+    text: str = "",
+    source: str = "",
+) -> str:
+    """
+    Normaliza el título extraído sin inferir información nueva.
+
+    Los parámetros text y source se mantienen para que la función
+    pueda ampliarse posteriormente con correcciones específicas.
+    """
+    del text, source
+
+    if not isinstance(title, str):
+        return ""
+
+    title = repair_mojibake(title)
+    title = normalize_spaces(title)
+
+    return title
