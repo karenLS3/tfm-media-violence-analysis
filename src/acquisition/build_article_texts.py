@@ -137,7 +137,14 @@ def main(run_id: str | None = None, sleep_seconds: float = 1.0) -> None:
             continue
 
         try:
-            parsed = parse_article_html(html_file)
+            parsed = parse_article_html(
+                    html_file=html_file,
+                    source=row.get("source", ""),
+                    snapshot_timestamp=row.get(
+                        "snapshot_timestamp",
+                        "",
+                    ),
+                )
 
             records.append(
                 {

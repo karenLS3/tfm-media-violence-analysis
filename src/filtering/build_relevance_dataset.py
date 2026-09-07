@@ -62,19 +62,31 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--run-id",
         default=None,
-        help="Identificador de corrida. Ejemplo: 2015_01_test. "
-            "Si se omite, usa las carpetas legacy data/processed, data/extracted_text, etc.",
+        help=(
+            "Identificador de corrida. Ejemplo: 2015_01_test. "
+            "Si se omite, usa las carpetas legacy."
+        ),
+    )
+
+    parser.add_argument(
+        "--input",
+        type=Path,
+        default=None,
+        help=(
+            "Parquet de entrada. Si se omite, usa "
+            "extracted_text/articles_text.parquet."
+        ),
     )
 
     return parser.parse_args()
 
 
-def main(run_id: str | None = None) -> None:
+def main(run_id: str | None = None, input_path: Path | None = None) -> None:
     paths = get_run_paths(ROOT, run_id)
 
     logger = setup_logger("build_relevance_dataset", paths.logs_dir)
 
-    articles_path = paths.extracted_text_dir / "articles_text.parquet"
+    articles_path = input_path if input_path is not None else paths.extracted_text_dir / "articles_text.parquet"
     lexicon_path = ROOT / "configs" / "lexicon_retrieval.yml"
 
     out_dir = paths.processed_dir
@@ -94,6 +106,57 @@ def main(run_id: str | None = None) -> None:
     logger.info(f"Reading articles: {articles_path}")
     df = pd.read_parquet(articles_path)
 
+    if "publication_date_enriched" in df.columns:
+
+        enriched_date = (
+            df["publication_date_enriched"]
+            .fillna("")
+            .astype("string")
+            .str.strip()
+        )
+
+        if "publication_date" in df.columns:
+            existing_date = (
+                df["publication_date"]
+                .fillna("")
+                .astype("string")
+                .str.strip()
+            )
+        else:
+            existing_date = pd.Series(
+                "",
+                index=df.index,
+                dtype="string",
+            )
+
+        use_enriched_date = (
+            existing_date.eq("")
+            & enriched_date.ne("")
+        )
+
+        df["publication_date"] = (
+            existing_date.mask(
+                use_enriched_date,
+                enriched_date,
+            )
+        )
+
+        if (
+            "publication_date_enriched_source"
+            in df.columns
+        ):
+
+            if "publication_date_source" not in df.columns:
+                df["publication_date_source"] = ""
+
+            df.loc[
+                use_enriched_date,
+                "publication_date_source",
+            ] = df.loc[
+                use_enriched_date,
+                "publication_date_enriched_source",
+            ]
+
     if "text_raw" not in df.columns:
         df["text_raw"] = df["text"]
 
@@ -108,13 +171,55 @@ def main(run_id: str | None = None) -> None:
     if "title_raw" not in df.columns:
         df["title_raw"] = df.get("title", "")
 
+
+    def choose_title_for_cleaning(row) -> str:
+        enriched = row.get(
+            "title_enriched",
+            "",
+        )
+
+        if (
+            isinstance(enriched, str)
+            and enriched.strip()
+        ):
+            return enriched
+
+        raw = row.get(
+            "title_raw",
+            "",
+        )
+
+        if isinstance(raw, str):
+            return raw
+
+        return ""
+
+
+    df["_title_for_cleaning"] = df.apply(
+        choose_title_for_cleaning,
+        axis=1,
+    )
+
     df["title_clean"] = df.apply(
         lambda row: fix_title(
-            row.get("title_raw", ""),
-            row.get("text_clean", ""),
-            row.get("source", "")
+            row.get(
+                "_title_for_cleaning",
+                "",
+            ),
+            row.get(
+                "text_clean",
+                "",
+            ),
+            row.get(
+                "source",
+                "",
+            ),
         ),
         axis=1,
+    )
+
+    df = df.drop(
+        columns=["_title_for_cleaning"]
     )
 
     logger.info(f"Reading lexicon: {lexicon_path}")
@@ -288,4 +393,4 @@ def main(run_id: str | None = None) -> None:
 
 if __name__ == "__main__":
     args = parse_args()
-    main(run_id=args.run_id)
+    main(run_id=args.run_id, input_path=args.input)
