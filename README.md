@@ -1,4 +1,4 @@
-# Minería y análisis de noticias sobre violencia machista en Argentina y México
+# Minería de noticias para el análisis del tratamiento mediático de la violencia machista en Argentina y México
 
 Repositorio del Trabajo Final de Máster orientado a la recuperación, procesamiento y análisis computacional de noticias relacionadas con violencia machista, femicidio y feminicidio en medios digitales de Argentina y México.
 
