@@ -1,0 +1,53 @@
+study:
+  start_year: 2015
+  target_end_year: 2025
+  current_data_end_year: 2023
+  snapshot_id: "2015_2023"
+
+corpus:
+  main_path: "outputs/final/case_articles_main.parquet"
+
+output:
+  root_dir: "outputs/analysis"
+
+periods:
+  - label: "2015-2018"
+    start_year: 2015
+    end_year: 2018
+    provisional: false
+
+  - label: "2019-2023"
+    start_year: 2019
+    end_year: 2023
+    provisional: false
+
+text:
+  title_columns:
+    - "title_clean"
+    - "title"
+    - "title_raw"
+  body_columns:
+    - "text_clean"
+    - "text"
+    - "text_raw"
+    - "text_excerpt"
+
+dates:
+  publication_date_columns:
+    - "publication_date"
+    - "published_at"
+    - "date_published"
+    - "article_date"
+    - "published_date"
+  archive_year_column: "archive_year"
+  snapshot_timestamp_column: "snapshot_timestamp"
+
+page_filter:
+  excluded_page_types:
+    - "topic_page"
+    - "author_page"
+    - "section_page"
+
+normalization:
+  articles_base: 100
+  words_base: 10000
