@@ -1,0 +1,13 @@
+metric,value,description
+runs_analyzed,132,Number of final articles_text.parquet files analyzed
+runs_with_retry_report,132,Number of runs with a retry summary report
+articles_processed,428497,Total article records processed
+articles_extracted_successfully,390719,Articles with non-empty text and without fetch_error after retries
+articles_without_valid_extraction,37778,Articles without usable extracted text after the extraction and retry process
+articles_with_fetch_error,37742,Articles retaining fetch_error after retries
+articles_empty_without_fetch_error,36,Articles with empty text but without fetch_error
+extraction_success_rate_pct,91.1836,Percentage of processed articles successfully extracted
+final_failure_rate_pct,8.8164,Percentage of processed articles without usable extracted text
+articles_retried,68093,Articles submitted to the retry procedure
+articles_recovered_by_retry,30351,Articles successfully recovered during retry
+retry_recovery_rate_pct,44.5729,Percentage of retried articles recovered
