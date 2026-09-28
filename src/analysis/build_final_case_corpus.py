@@ -114,11 +114,15 @@ FEMALE_TARGET = (
 
 
 CLEAR_FEMALE_TO_MALE_PATTERNS = [
+    # "La mujer mató a su marido."
     re.compile(
         rf"\b{FEMALE_SUBJECT}\s+"
         rf"{AUXILIARY}{VIOLENT_VERB}\s+"
         rf"{MALE_TARGET}\b"
     ),
+
+    # "Ella lo mató."
+    # "La mujer lo apuñaló."
     re.compile(
         r"\b(?:ella|la mujer|la esposa|la novia|"
         r"la madre|la hija)\s+"
@@ -126,9 +130,17 @@ CLEAR_FEMALE_TO_MALE_PATTERNS = [
         r"(?:lo\s+)?"
         rf"{VIOLENT_VERB}\b"
     ),
+
+    # Formas compuestas con sujeto femenino explícito:
+    # "La mujer había drogado a su esposo."
     re.compile(
-        rf"\b{VIOLENT_VERB}\s+a\s+su\s+"
-        r"(?:esposo|marido|novio|pareja|hijo)\b"
+        rf"\b{FEMALE_SUBJECT}\b"
+        r"[^.!?]{0,90}\b"
+        r"(?:habia|ha|haya|habria)\s+"
+        r"(?:drogado|apunalado|asesinado|matado|golpeado|"
+        r"estrangulado|baleado|envenenado|descuartizado)\b"
+        r"[^.!?]{0,40}\b"
+        rf"{MALE_TARGET}\b"
     ),
 ]
 
@@ -200,6 +212,50 @@ def classify_scope_alert(
 
     text = build_analysis_text(row)
 
+    explicit_label_type = str(
+        row.get("explicit_label_type", "") or ""
+    ).strip()
+
+    clear_female_to_male = matches_any(
+        text,
+        CLEAR_FEMALE_TO_MALE_PATTERNS,
+    )
+
+    clear_female_to_female = matches_any(
+        text,
+        CLEAR_FEMALE_TO_FEMALE_PATTERNS,
+    )
+
+    possible_female_aggressor = matches_any(
+        text,
+        POSSIBLE_FEMALE_AGGRESSOR_PATTERNS,
+    )
+
+    # Caso canónico de alta confianza:
+    # femicidio/feminicidio explícito + evidencia compatible con mujer víctima.
+    # No requiere revisión de female_aggressor salvo que exista además
+    # una señal explícita y contradictoria de mujer agresora.
+    if (
+        explicit_label_type == "femicide_feminicide"
+        and direction in {
+            "male_to_female",
+            "female_victim_explicit",
+        }
+        and not (
+            clear_female_to_male
+            or clear_female_to_female
+            or possible_female_aggressor
+        )
+    ):
+        return pd.Series(
+            {
+                "auto_scope_status": "no_alert",
+                "auto_scope_reason": (
+                    "explicit_femicide_consistent_with_female_victim"
+                ),
+            }
+        )
+
     if direction == "female_to_male":
         return pd.Series(
             {
@@ -210,10 +266,17 @@ def classify_scope_alert(
             }
         )
 
-    if matches_any(
-        text,
-        CLEAR_FEMALE_TO_MALE_PATTERNS,
-    ):
+    if direction == "mixed_or_conflicting":
+        return pd.Series(
+            {
+                "auto_scope_status": "alert",
+                "auto_scope_reason": (
+                    "mixed_violence_direction_requires_scope_review"
+                ),
+            }
+        )
+
+    if clear_female_to_male:
         return pd.Series(
             {
                 "auto_scope_status": "alert",
@@ -223,10 +286,7 @@ def classify_scope_alert(
             }
         )
 
-    if matches_any(
-        text,
-        CLEAR_FEMALE_TO_FEMALE_PATTERNS,
-    ):
+    if clear_female_to_female:
         return pd.Series(
             {
                 "auto_scope_status": "alert",
@@ -236,10 +296,7 @@ def classify_scope_alert(
             }
         )
 
-    if matches_any(
-        text,
-        POSSIBLE_FEMALE_AGGRESSOR_PATTERNS,
-    ):
+    if possible_female_aggressor:
         return pd.Series(
             {
                 "auto_scope_status": "alert",

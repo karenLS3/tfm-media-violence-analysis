@@ -109,8 +109,8 @@ LEVEL_RANK = {
 
 
 FEMALE_NOUN = (
-    r"(?:mujer|joven|adolescente|nina|menor|victima|"
-    r"esposa|novia|exnovia|cooperante)"
+    r"(?:mujer|joven|adolescente|nina|menor|"
+    r"esposa|novia|exnovia|madre|hija|hermana|cooperante)"
 )
 
 MALE_RELATION_OR_PERSON = (
@@ -122,6 +122,17 @@ MALE_RELATION_OR_PERSON = (
 VIOLENT_VERB = (
     r"(?:asesino|mato|golpeo|apu[nn]alo|estrangulo|"
     r"baleo|secuestro|amenazo|drogo|enveneno|descuartizo)"
+)
+
+FEMALE_AGGRESSOR_SUBJECT = (
+    r"(?:la|una)\s+"
+    r"(?:mujer|esposa|novia|exnovia|expareja|"
+    r"madre|hija|tia|hermana)"
+)
+
+MALE_VICTIM_TARGET = (
+    r"(?:a\s+)?(?:su\s+)?"
+    r"(?:esposo|marido|novio|exnovio|pareja|hombre|hijo)"
 )
 
 SEXUAL_VERB = (
@@ -179,56 +190,83 @@ SEXUAL_VIOLENCE_TEXT_PATTERNS = [
     r"(?:abuso|violacion|agresion sexual)\b",
 ]
 
+FEMALE_RELATION_TARGET = (
+    r"(?:esposa|novia|exnovia|madre|hija|hermana)"
+)
+
+
 # Construcciones claras en las que la víctima es una mujer.
 FEMALE_VICTIM_DIRECTION_PATTERNS = [
+    # Pasiva inequívocamente femenina:
+    # "La mujer fue asesinada."
+    # "La joven había sido apuñalada."
     rf"\b(?:la|una|esta)\s+{FEMALE_NOUN}\b"
-    rf".{{0,55}}\b(?:fue|habia sido|resulto)?\s*"
+    rf"[^.!?]{{0,40}}\b"
+    rf"(?:fue|habia sido|resulto)\s+"
     rf"(?:asesinada|muerta|golpeada|apun?alada|estrangulada|"
     rf"baleada|secuestrada|violada|abusada)\b",
 
+    # Agresor masculino + pronombre femenino:
+    # "El acusado la mató."
+    # "Su marido la golpeó."
     rf"\b(?:el|un|su)\s+{MALE_RELATION_OR_PERSON}\b"
-    rf".{{0,90}}\b(?:la\s+)?"
-    rf"(?:asesino|mato|golpeo|apun?alo|estrangulo|baleo|"
-    rf"secuestro|amenazo|violo)\b",
+    rf"[^.!?]{{0,35}}\b"
+    rf"la\s+{VIOLENT_VERB}\b",
 
-    rf"\b(?:asesino|mato|golpeo|apun?alo|estrangulo|baleo|"
-    rf"secuestro|amenazo|violo)\b"
-    rf".{{0,70}}\b(?:a\s+)?(?:la|una|su)\s+{FEMALE_NOUN}\b",
+    # Agresor masculino + víctima femenina explícita:
+    # "El hombre mató a la mujer."
+    # "El acusado asesinó a su esposa."
+    rf"\b(?:el|un|su)\s+{MALE_RELATION_OR_PERSON}\b"
+    rf"[^.!?]{{0,30}}\b{VIOLENT_VERB}\b"
+    rf"[^.!?]{{0,15}}\b"
+    rf"(?:a\s+)?(?:la|una)\s+{FEMALE_NOUN}\b",
 
-    r"\b(?:la|ella)\s+(?:asesino|mato|golpeo|violo|"
-    r"apun?alo|estrangulo|secuestro|amenazo)\b",
+    rf"\b(?:el|un|su)\s+{MALE_RELATION_OR_PERSON}\b"
+    rf"[^.!?]{{0,30}}\b{VIOLENT_VERB}\b"
+    rf"[^.!?]{{0,15}}\b"
+    rf"a\s+su\s+{FEMALE_RELATION_TARGET}\b",
+
+    # Víctima femenina explícita aunque el sujeto no aparezca:
+    # "Mató a una mujer."
+    rf"\b{VIOLENT_VERB}\s+"
+    rf"(?:a\s+)?(?:la|una)\s+{FEMALE_NOUN}\b",
+
+    # Pronombre objeto:
+    # "La mató."
+    # "La golpeó."
+    rf"\bla\s+{VIOLENT_VERB}\b",
 
     r"\babuso\s+de\s+ella\b",
 ]
 
 # Dirección inversa clara: mujer como agresora y hombre como víctima.
+# La clasificación female_to_male exige evidencia explícita de sujeto femenino.
+# No se infiere el sexo del agresor únicamente a partir de expresiones
+# como "mató a su pareja".
 FEMALE_AGGRESSOR_MALE_VICTIM_PATTERNS = [
-    rf"\b(?:la|una)\s+(?:mujer|esposa|novia|exnovia|expareja)\b"
-    rf".{{0,150}}\b{VIOLENT_VERB}\b"
-    rf".{{0,60}}\b(?:a\s+)?(?:su\s+)?"
-    rf"(?:esposo|marido|novio|exnovio|pareja|hombre)\b",
+    # Forma verbal simple:
+    # "La mujer mató a su marido."
+    # "Una esposa apuñaló a su esposo."
+    rf"\b{FEMALE_AGGRESSOR_SUBJECT}\b"
+    rf"[^.!?]{{0,90}}\b{VIOLENT_VERB}\b"
+    rf"[^.!?]{{0,35}}\b{MALE_VICTIM_TARGET}\b",
 
-    # Formas verbales perfectas o compuestas frecuentes en textos periodísticos:
-    # 'la mujer habia drogado a su esposo',
-    # 'la esposa lo habia apunalado'.
-    r"\b(?:la|una)\s+(?:mujer|esposa|novia|exnovia|expareja)\b"
-    r".{0,120}\b(?:habia|ha|haya|habria|fue)?\s*"
-    r"(?:drogado|apunalado|asesinado|matado|golpeado|estrangulado|"
-    r"baleado|envenenado|descuartizado)\b"
-    r".{0,80}\b(?:a\s+)?(?:su\s+)?"
-    r"(?:esposo|marido|novio|exnovio|pareja|hombre)\b",
+    # Pronombre masculino:
+    # "Ella lo mató."
+    # "La mujer lo apuñaló."
+    r"\b(?:ella|la mujer|la esposa|la novia|"
+    r"la exnovia|la expareja)\b"
+    r"[^.!?]{0,80}\b(?:lo\s+)?"
+    rf"{VIOLENT_VERB}\b",
 
-    rf"\b(?:ella|la mujer|la esposa|la novia)\b"
-    rf".{{0,150}}\b(?:lo\s+)?{VIOLENT_VERB}\b",
-
-    r"\b(?:ella|la mujer|la esposa|la novia|la expareja)\b"
-    r".{0,150}\b(?:lo\s+)?(?:habia|ha|haya|habria)?\s*"
-    r"(?:drogado|apunalado|asesinado|matado|golpeado|estrangulado|"
-    r"baleado|envenenado|descuartizado)\b",
-
-    rf"\b(?:descuartizo|asesino|mato|apun?alo|"
-    rf"enveneno|drogo)\s+a\s+su\s+"
-    rf"(?:esposo|marido|novio|pareja)\b",
+    # Formas compuestas:
+    # "La mujer había drogado a su esposo."
+    # "La esposa había apuñalado a su marido."
+    rf"\b{FEMALE_AGGRESSOR_SUBJECT}\b"
+    r"[^.!?]{0,90}\b(?:habia|ha|haya|habria)\s+"
+    r"(?:drogado|apunalado|asesinado|matado|golpeado|"
+    r"estrangulado|baleado|envenenado|descuartizado)\b"
+    rf"[^.!?]{{0,40}}\b{MALE_VICTIM_TARGET}\b",
 ]
 
 # Violencia sexual directa contra una víctima mujer.
@@ -459,6 +497,47 @@ def _article_value_from_decisive_evidence(
         return next(iter(values))
 
     return "mixed"
+
+def derive_article_violence_direction(
+    evidence: list[dict[str, Any]],
+) -> str:
+    directions = {
+        str(item.get("direction", "unknown"))
+        for item in evidence
+        if str(item.get("direction", "unknown"))
+        not in {"", "unknown"}
+    }
+
+    has_reverse = "female_to_male" in directions
+
+    has_female_victim = bool(
+        directions
+        & {
+            "male_to_female",
+            "female_victim_explicit",
+            "probable_male_to_female",
+        }
+    )
+
+    if has_reverse and has_female_victim:
+        return "mixed_or_conflicting"
+
+    if has_reverse:
+        return "female_to_male"
+
+    if "male_to_female" in directions:
+        return "male_to_female"
+
+    if "female_victim_explicit" in directions:
+        return "female_victim_explicit"
+
+    if "probable_male_to_female" in directions:
+        return "probable_male_to_female"
+
+    if "possible_male_victim" in directions:
+        return "possible_male_victim"
+
+    return "unknown"
 
 
 def classify_contextual_windows(
@@ -791,10 +870,8 @@ def classify_contextual_windows(
         }
     )
 
-    article_direction = _article_value_from_decisive_evidence(
-        decisive_evidence,
-        field="direction",
-        empty_value="unknown",
+    article_direction = derive_article_violence_direction(
+        all_evidence
     )
 
     return {

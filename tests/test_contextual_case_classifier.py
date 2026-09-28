@@ -3,6 +3,12 @@ from src.analysis.contextual_case_classifier import (
     classify_contextual_case,
 )
 
+from src.analysis.contextual_case_classifier import (
+    build_prepared_contextual_lexicon,
+    classify_contextual_case,
+    detect_violence_direction,
+)
+
 
 BASE_LEXICON = {
     "female_reference_terms": {
@@ -264,3 +270,46 @@ def test_direct_sexual_violence_against_woman_is_high():
     assert result["contextual_evidence_level"] == "high"
     assert result["violence_direction"] == "male_to_female"
     assert result["provisional_case_status"] == "candidate_contextual_high"
+
+
+def test_male_aggressor_partner_is_not_female_to_male():
+    direction, _ = detect_violence_direction(
+        "El hombre mató a su pareja. "
+        "El hecho fue investigado como femicidio."
+    )
+
+    assert direction != "female_to_male"
+
+
+def test_implicit_subject_is_not_assumed_female():
+    direction, _ = detect_violence_direction(
+        "Mató a su pareja después de una discusión."
+    )
+
+    assert direction != "female_to_male"
+
+
+def test_female_reference_in_previous_sentence_does_not_flip_direction():
+    direction, _ = detect_violence_direction(
+        "La mujer habló con la policía. "
+        "El hombre mató a su pareja."
+    )
+
+    assert direction != "female_to_male"
+
+
+def test_explicit_female_aggressor_is_female_to_male():
+    direction, _ = detect_violence_direction(
+        "Una mujer mató a su marido durante una discusión."
+    )
+
+    assert direction == "female_to_male"
+
+
+def test_female_aggressor_possible_self_defense_remains_female_to_male():
+    direction, _ = detect_violence_direction(
+        "La mujer mató a su marido cuando él la atacaba "
+        "y ella intentaba defenderse."
+    )
+
+    assert direction == "female_to_male"
