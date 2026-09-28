@@ -2,31 +2,7 @@ from __future__ import annotations
 
 import re
 
-
-def repair_mojibake(text: str) -> str:
-    """
-    Repara casos típicos como:
-    saÃ±a -> saña
-    MarÃ­a -> María
-    MÃ©xico -> México
-
-    """
-    if not isinstance(text, str):
-        return ""
-
-    suspicious = ["Ã", "Â", "â€™", "â€œ", "â€"]
-
-    if not any(s in text for s in suspicious):
-        return text
-
-    try:
-        fixed = text.encode("latin1", errors="ignore").decode("utf-8", errors="ignore")
-        if fixed and fixed.count("Ã") < text.count("Ã"):
-            return fixed
-    except Exception:
-        pass
-
-    return text
+from src.extraction.text_encoding import repair_mojibake
 
 
 def normalize_spaces(text: str) -> str:

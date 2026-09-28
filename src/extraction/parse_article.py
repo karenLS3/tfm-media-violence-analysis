@@ -7,20 +7,13 @@ import pandas as pd
 from bs4 import BeautifulSoup
 import trafilatura
 
+from src.extraction.text_encoding import repair_mojibake
+
 
 # =========================================================
 # Limpieza básica
 # =========================================================
 
-MOJIBAKE_MARKERS = (
-    "Ã",
-    "Â",
-    "â€",
-    "â€™",
-    "â€œ",
-    "â€\x9d",
-    "ðŸ",
-)
 
 
 def clean_value(value: object) -> str:
@@ -32,72 +25,7 @@ def clean_value(value: object) -> str:
     ).strip()
 
 
-def mojibake_score(text: str) -> int:
-    return sum(
-        text.count(marker)
-        for marker in MOJIBAKE_MARKERS
-    )
 
-
-def fix_mojibake(value: object) -> str:
-    """
-    Repara de forma conservadora mojibake típico producido
-    cuando texto UTF-8 fue interpretado como Latin-1 o
-    Windows-1252.
-
-    Una transformación solo se conserva si reduce la cantidad
-    de indicadores de mojibake.
-    """
-    text = clean_value(value)
-
-    if not text:
-        return ""
-
-    best = text
-    best_score = mojibake_score(best)
-
-    # Se permiten dos pasadas por si existe doble codificación.
-    for _ in range(2):
-        candidates: list[str] = []
-
-        for encoding in (
-            "latin1",
-            "cp1252",
-        ):
-            try:
-                candidate = (
-                    best
-                    .encode(encoding)
-                    .decode("utf-8")
-                )
-
-                candidates.append(candidate)
-
-            except (
-                UnicodeEncodeError,
-                UnicodeDecodeError,
-            ):
-                continue
-
-        if not candidates:
-            break
-
-        candidate = min(
-            candidates,
-            key=mojibake_score,
-        )
-
-        candidate_score = mojibake_score(
-            candidate
-        )
-
-        if candidate_score >= best_score:
-            break
-
-        best = candidate
-        best_score = candidate_score
-
-    return best
 
 
 # =========================================================
@@ -252,7 +180,7 @@ def normalize_title_by_source(
         source
     ).lower()
 
-    title_value = fix_mojibake(
+    title_value = repair_mojibake(
         title
     )
 
