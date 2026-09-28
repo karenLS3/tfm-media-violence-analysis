@@ -17,6 +17,13 @@ from src.analysis.article_normalization import (
     resolve_analysis_date,
 )
 
+from src.utils.text_quality import (
+    clean_analysis_text,
+    contains_html,
+    contains_mojibake,
+    contains_url,
+)
+
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG = ROOT / "configs" / "analysis.yml"
@@ -155,12 +162,58 @@ def build_pre_dedup_dataframe(
         "phase0|" + df.loc[missing, "article_key"].astype("string")
     )
 
-    title = first_nonempty(df, list(config["text"]["title_columns"]))
-    body = first_nonempty(df, list(config["text"]["body_columns"]))
+    title = first_nonempty(
+        df,
+        list(config["text"]["title_columns"]),
+    )
+
+    body = first_nonempty(
+        df,
+        list(config["text"]["body_columns"]),
+    )
     df["analysis_title"] = title.map(normalize_whitespace)
     df["analysis_body"] = body.map(normalize_whitespace)
-    # Importante: anchor_text no entra en el corpus lingüístico.
-    df["analysis_text"] = df["analysis_body"]
+    # Representación textual canónica utilizada en los análisis.
+    # anchor_text no forma parte del corpus lingüístico.
+    df["analysis_text"] = [
+        clean_analysis_text(
+            text=text,
+            source=source,
+        )
+        for text, source in zip(
+            df["analysis_body"].fillna(""),
+            df["source"].fillna(""),
+        )
+    ]
+
+    df["analysis_text_length"] = (
+        df["analysis_text"]
+        .str.len()
+    )
+
+    df["analysis_has_mojibake"] = (
+        df["analysis_text"]
+        .map(contains_mojibake)
+    )
+
+    df["analysis_has_url"] = (
+        df["analysis_text"]
+        .map(contains_url)
+    )
+
+    df["analysis_has_html"] = (
+        df["analysis_text"]
+        .map(contains_html)
+    )
+
+    MIN_ANALYSIS_CHARS = 200
+    
+    df["analysis_eligible"] = (
+        (df["analysis_text_length"] >= MIN_ANALYSIS_CHARS)
+        & ~df["analysis_has_mojibake"]
+        & ~df["analysis_has_url"]
+        & ~df["analysis_has_html"]
+    )
 
     df["title_word_count"] = df["analysis_title"].map(count_words)
     df["word_count"] = df["analysis_text"].map(count_words)
@@ -343,6 +396,9 @@ def build_text_quality(df: pd.DataFrame) -> pd.DataFrame:
         .agg(
             n_articles=("analysis_identity", "nunique"),
             articles_with_text=("has_analysis_text", "sum"),
+            mojibake_residual=("analysis_has_mojibake", "sum"),
+            urls_residual=("analysis_has_url", "sum"),
+            html_residual=("analysis_has_html", "sum"),
             median_words=("word_count", "median"),
             mean_words=("word_count", "mean"),
             p05_words=("word_count", lambda s: s.quantile(0.05)),
@@ -350,9 +406,13 @@ def build_text_quality(df: pd.DataFrame) -> pd.DataFrame:
         )
         .reset_index()
     )
+
     table["text_availability_pct"] = (
-        100 * table["articles_with_text"] / table["n_articles"]
+        100
+        * table["articles_with_text"]
+        / table["n_articles"]
     )
+
     return table.sort_values(["country", "source"])
 
 
@@ -400,6 +460,46 @@ def main() -> None:
 
     final = deduplicate_articles(included)
 
+    n_mojibake = int(final["analysis_has_mojibake"].sum())
+    n_urls = int(final["analysis_has_url"].sum())
+    n_html = int(final["analysis_has_html"].sum())
+    n_short = int((final["analysis_text_length"] < 200).sum())
+
+    print("\nCalidad del texto analítico:")
+    print(f"- Mojibake residual: {n_mojibake:,}")
+    print(f"- URLs residuales: {n_urls:,}")
+    print(f"- HTML residual: {n_html:,}")
+    print(f"- Textos < 200 caracteres: {n_short:,}")
+
+    # ------------------------------------------------------------------
+    # Auditoría de documentos no elegibles para el análisis textual
+    # ------------------------------------------------------------------
+
+    quality_columns = [
+        "analysis_identity",
+        "country",
+        "source",
+        "analysis_year",
+        "normalized_url",
+        "analysis_title",
+        "analysis_text_length",
+        "analysis_has_mojibake",
+        "analysis_has_url",
+        "analysis_has_html",
+        "analysis_text",
+    ]
+
+    quality_columns = [
+        col
+        for col in quality_columns
+        if col in final.columns
+    ]
+
+    excluded_text_quality = final.loc[
+        ~final["analysis_eligible"],
+        quality_columns,
+    ].copy()
+
     # Auditorías temporales del corpus REALMENTE analizado.
     temporal_audit = build_temporal_resolution_audit(final)
     archive_vs_analysis = build_archive_vs_analysis_audit(final)
@@ -435,11 +535,29 @@ def main() -> None:
             "final_articles": len(final),
             "articles_with_text": int(final["has_analysis_text"].sum()),
             "articles_with_title": int(final["has_title"].sum()),
-            "min_analysis_year": int(final["analysis_year"].min()) if not final.empty else pd.NA,
-            "max_analysis_year": int(final["analysis_year"].max()) if not final.empty else pd.NA,
+            "mojibake_residual": n_mojibake,
+            "urls_residual": n_urls,
+            "html_residual": n_html,
+            "texts_under_200_chars": n_short,
+            "min_analysis_year": (
+                int(final["analysis_year"].min())
+                if not final.empty else pd.NA
+            ),
+            "max_analysis_year": (
+                int(final["analysis_year"].max())
+                if not final.empty else pd.NA
+            ),
+            "analysis_eligible_articles": int(
+                final["analysis_eligible"].sum()
+            ),
+            "analysis_ineligible_articles": int(
+                (~final["analysis_eligible"]).sum()
+            ),
         }]
     )
     save_csv(summary, tables_dir / "analysis_corpus_summary.csv")
+
+    save_csv(excluded_text_quality, tables_dir / "excluded_text_quality.csv")
 
     manifest = {
         "snapshot": snapshot,

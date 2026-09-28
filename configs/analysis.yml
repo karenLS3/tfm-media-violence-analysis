@@ -1,8 +1,8 @@
 study:
   start_year: 2015
   target_end_year: 2025
-  current_data_end_year: 2023
-  snapshot_id: "2015_2023"
+  current_data_end_year: 2025
+  snapshot_id: "2015_2025"
 
 corpus:
   main_path: "outputs/final/case_articles_main.parquet"
@@ -16,9 +16,14 @@ periods:
     end_year: 2018
     provisional: false
 
-  - label: "2019-2023"
+  - label: "2019-2021"
     start_year: 2019
-    end_year: 2023
+    end_year: 2021
+    provisional: false
+
+  - label: "2022-2025"
+    start_year: 2022
+    end_year: 2025
     provisional: false
 
 text:
@@ -35,6 +40,8 @@ text:
 dates:
   publication_date_columns:
     - "publication_date"
+    - "publication_date_enriched"
+    - "metadata_publication_date"
     - "published_at"
     - "date_published"
     - "article_date"
