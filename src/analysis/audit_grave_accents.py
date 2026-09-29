@@ -6,12 +6,23 @@ import re
 import pandas as pd
 
 
-INPUT = Path(
-    "outputs/final/case_articles_analysis.parquet"
+ROOT = Path(__file__).resolve().parents[2]
+
+INPUT = (
+    ROOT
+    / "outputs"
+    / "analysis"
+    / "2015_2025"
+    / "articles.parquet"
 )
 
-OUTPUT = Path(
-    "outputs/final/quality/grave_accent_contexts.csv"
+OUTPUT = (
+    ROOT
+    / "outputs"
+    / "analysis"
+    / "2015_2025"
+    / "quality"
+    / "grave_accent_contexts.csv"
 )
 
 GRAVE_RE = re.compile(
@@ -22,6 +33,20 @@ GRAVE_RE = re.compile(
 def main() -> None:
 
     df = pd.read_parquet(INPUT)
+
+    if "analysis_eligible" not in df.columns:
+        raise ValueError(
+            "El corpus canónico no contiene "
+            "'analysis_eligible'."
+        )
+
+    df = df.loc[
+        df["analysis_eligible"]
+    ].copy()
+
+    print(
+        f"Documentos elegibles auditados: {len(df):,}"
+    )
 
     records = []
 

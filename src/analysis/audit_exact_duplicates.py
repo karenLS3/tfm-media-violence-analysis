@@ -3,19 +3,31 @@ from pathlib import Path
 import pandas as pd
 
 
-INPUT = Path(
-    "outputs/final/case_articles_analysis.parquet"
+ROOT = Path(__file__).resolve().parents[2]
+
+INPUT = (
+    ROOT
+    / "outputs"
+    / "analysis"
+    / "2015_2025"
+    / "articles.parquet"
 )
 
-OUTPUT = Path(
-    "outputs/final/quality_repaired/"
-    "exact_duplicate_groups.csv"
+OUTPUT = (
+    ROOT
+    / "outputs"
+    / "analysis"
+    / "2015_2025"
+    / "quality"
+    / "exact_duplicate_groups.csv"
 )
 
 
 def main():
 
     df = pd.read_parquet(INPUT)
+
+    df = df[df["analysis_eligible"]]
 
     if "analysis_text" not in df.columns:
         raise ValueError(

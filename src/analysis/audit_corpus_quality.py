@@ -9,7 +9,6 @@ import re
 import pandas as pd
 
 from src.utils.text_quality import (
-    clean_analysis_text,
     contains_html,
     contains_mojibake,
     contains_url,
@@ -20,12 +19,22 @@ from src.utils.text_quality import (
 # RUTAS
 # =====================================================================
 
-DEFAULT_INPUT = Path(
-    "outputs/final/case_articles_main.parquet"
+ROOT = Path(__file__).resolve().parents[2]
+
+DEFAULT_INPUT = (
+    ROOT
+    / "outputs"
+    / "analysis"
+    / "2015_2025"
+    / "articles.parquet"
 )
 
-DEFAULT_OUTPUT_DIR = Path(
-    "outputs/final/quality"
+DEFAULT_OUTPUT_DIR = (
+    ROOT
+    / "outputs"
+    / "analysis"
+    / "2015_2025"
+    / "quality"
 )
 
 
@@ -34,8 +43,10 @@ DEFAULT_OUTPUT_DIR = Path(
 # =====================================================================
 
 TEXT_COLUMN_CANDIDATES = [
-    "article_text",
+    "analysis_text",
+    "text_clean",
     "text",
+    "article_text",
     "full_text",
     "clean_text",
     "body",
@@ -262,6 +273,10 @@ def audit_corpus(
 
     df = pd.read_parquet(input_path)
 
+    df = df.loc[
+        df["analysis_eligible"]
+    ].copy()
+
     print(f"Artículos: {len(df):,}")
     print(f"Columnas: {len(df.columns)}")
 
@@ -314,74 +329,6 @@ def audit_corpus(
     )
 
     # -----------------------------------------------------------------
-    # 4. GENERAR VERSIÓN REPARADA
-    # -----------------------------------------------------------------
-
-    if "source" in df.columns:
-
-        df["audit_clean_text"] = [
-            clean_analysis_text(
-                text=text,
-                source=source,
-            )
-            for text, source in zip(
-                df["audit_original_text"],
-                df["source"].fillna(""),
-            )
-        ]
-
-    else:
-
-        df["audit_clean_text"] = (
-            df["audit_original_text"]
-            .map(clean_analysis_text)
-        )
-
-        # -----------------------------------------------------------------
-    # 4B. COMPROBAR CALIDAD DESPUÉS DE LA REPARACIÓN
-    # -----------------------------------------------------------------
-
-    df["audit_clean_has_mojibake"] = (
-        df["audit_clean_text"]
-        .map(contains_mojibake)
-    )
-
-    df["audit_clean_has_html"] = (
-        df["audit_clean_text"]
-        .map(contains_html)
-    )
-
-    df["audit_clean_has_url"] = (
-        df["audit_clean_text"]
-        .map(contains_url)
-    )
-
-    df["audit_mojibake_repaired"] = (
-        df["audit_has_mojibake"]
-        & ~df["audit_clean_has_mojibake"]
-    )
-
-    df["audit_clean_length"] = (
-        df["audit_clean_text"]
-        .str.len()
-    )
-
-    # -----------------------------------------------------------------
-    # 5. MEDIR CUÁNTO CAMBIÓ
-    # -----------------------------------------------------------------
-
-    df["audit_removed_chars"] = (
-        df["audit_original_length"]
-        - df["audit_clean_length"]
-    )
-
-    df["audit_removed_pct"] = (
-        df["audit_removed_chars"]
-        / df["audit_original_length"].clip(lower=1)
-        * 100
-    )
-
-    # -----------------------------------------------------------------
     # 6. TEXTOS SOSPECHOSOS
     # -----------------------------------------------------------------
 
@@ -389,8 +336,7 @@ def audit_corpus(
         df["audit_has_mojibake"]
         | df["audit_has_html"]
         | df["audit_has_url"]
-        | (df["audit_removed_pct"].abs() > 20)
-        | (df["audit_clean_length"] < 200)
+        | (df["audit_original_length"] < 200)
     )
 
     # -----------------------------------------------------------------
@@ -398,7 +344,7 @@ def audit_corpus(
     # -----------------------------------------------------------------
 
     df["audit_text_hash"] = (
-        df["audit_clean_text"]
+        df["audit_original_text"]
         .map(normalized_text_hash)
     )
 
@@ -407,8 +353,7 @@ def audit_corpus(
             "audit_text_hash",
             keep=False,
         )
-        &
-        (df["audit_clean_length"] > 0)
+        & (df["audit_original_length"] > 0)
     )
 
     df["audit_exact_duplicate"] = duplicate_mask
@@ -438,24 +383,11 @@ def audit_corpus(
 
     audit_columns = [
         "audit_has_mojibake",
-        "audit_clean_has_mojibake",
-        "audit_mojibake_repaired",
-
         "audit_has_html",
-        "audit_clean_has_html",
-
         "audit_has_url",
-        "audit_clean_has_url",
-
         "audit_original_length",
-        "audit_clean_length",
-        "audit_removed_chars",
-        "audit_removed_pct",
-
         "audit_exact_duplicate",
-
         "audit_original_text",
-        "audit_clean_text",
     ]
 
     suspicious_columns = (
@@ -527,8 +459,8 @@ def audit_corpus(
         metadata_columns
         + [
             "audit_text_hash",
-            "audit_clean_length",
-            "audit_clean_text",
+            "audit_original_length",
+            "audit_original_text",
         ]
     )
 
@@ -624,44 +556,6 @@ def audit_corpus(
                     .mean()
                 ),
             },
-            {
-                "metric": "mean_clean_length",
-                "value": (
-                    df["audit_clean_length"]
-                    .mean()
-                ),
-            },
-            {
-                "metric": "mean_removed_pct",
-                "value": (
-                    df["audit_removed_pct"]
-                    .mean()
-                ),
-            },
-                        {
-                "metric": "mojibake_remaining_after_cleaning",
-                "value": int(
-                    df["audit_clean_has_mojibake"].sum()
-                ),
-            },
-            {
-                "metric": "mojibake_repaired",
-                "value": int(
-                    df["audit_mojibake_repaired"].sum()
-                ),
-            },
-            {
-                "metric": "urls_remaining_after_cleaning",
-                "value": int(
-                    df["audit_clean_has_url"].sum()
-                ),
-            },
-            {
-                "metric": "html_remaining_after_cleaning",
-                "value": int(
-                    df["audit_clean_has_html"].sum()
-                ),
-            },
         ]
     )
 
@@ -735,10 +629,6 @@ def audit_corpus(
                     "audit_exact_duplicate",
                     "sum",
                 ),
-                mean_removed_pct=(
-                    "audit_removed_pct",
-                    "mean",
-                ),
             )
             .reset_index()
         )
@@ -779,7 +669,7 @@ def audit_corpus(
 
     audited_path = (
         output_dir
-        / "case_articles_main_audited.parquet"
+        / "articles_audited.parquet"
     )
 
     df.to_parquet(
@@ -824,22 +714,6 @@ def audit_corpus(
         "\nArchivos generados en:"
         f"\n{output_dir.resolve()}"
     )
-
-    print(
-        f"Mojibake reparado automáticamente: "
-        f"{df['audit_mojibake_repaired'].sum():,}"
-    )
-
-    print(
-        f"Mojibake restante después de limpieza: "
-        f"{df['audit_clean_has_mojibake'].sum():,}"
-    )
-
-    print(
-        f"URLs restantes después de limpieza: "
-        f"{df['audit_clean_has_url'].sum():,}"
-    )
-
 
 # =====================================================================
 # CLI
